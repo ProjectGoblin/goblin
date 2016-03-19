@@ -1,0 +1,23 @@
+{
+  "name": "goblin",
+  "version": "0.0.1",
+  "description": "Brings ROS to Docker clusters",
+  "main": "master.js",
+  "scripts": {
+    "test": "node test/all.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ProjectGoblin/goblin.git"
+  },
+  "keywords": [
+    "ROS",
+    "consul"
+  ],
+  "author": "Yufei Liu",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ProjectGoblin/goblin/issues"
+  },
+  "homepage": "https://github.com/ProjectGoblin/goblin#readme"
+}
