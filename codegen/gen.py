@@ -7,6 +7,8 @@ from gen_test import generate_test
 import ast
 import sys
 import tokenize
+import requests
+import os
 from collections import defaultdict
 
 
@@ -37,11 +39,21 @@ def index_tokens(tokens):
         indexs[tk.lineno].append(tk)
     return indexs
 
+MASTER_API_PY = 'master_api.py'
+GITHUB_RAW = 'https://raw.githubusercontent.com/ros/ros_comm/indigo-devel/tools/rosmaster/src/rosmaster/master_api.py'
 
 if __name__ == '__main__':
-    with open('master_api.py', 'r') as src_file:
+    if not os.path.exists(MASTER_API_PY):
+        res = requests.get(GITHUB_RAW)
+        if res.status_code is 200:
+            with open(MASTER_API_PY, 'w') as src_file:
+                src_file.write(res.content)
+        else:
+            print('Cannot download master_api.py. Exiting.')
+            exit(-1)
+    with open(MASTER_API_PY) as src_file:
         source = src_file.read()
-    with open('master_api.py', 'r') as src_file:
+    with open(MASTER_API_PY) as src_file:
         tokgen = tokenize.generate_tokens(src_file.readline)
         tokens = index_tokens(tokgen)
     classes = get_classes(source)
