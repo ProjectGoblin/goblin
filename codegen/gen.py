@@ -1,10 +1,13 @@
 from __future__ import print_function
 
 from model import Token, XMLRPCMethod
+from gen_src import generate_source
+from gen_test import generate_test
+
 import ast
+import sys
 import tokenize
 from collections import defaultdict
-from fn import _
 
 
 def type_filter(klass, xs):
@@ -43,3 +46,15 @@ if __name__ == '__main__':
         tokens = index_tokens(tokgen)
     classes = get_classes(source)
     apis = get_apis(classes, tokens)
+    if len(sys.argv) == 2:
+        cmd = sys.argv[1]
+        if cmd.startswith('s'):
+            code = generate_source(apis)
+            print(code)
+        if cmd.startswith('t'):
+            code = generate_test(apis)
+            print(code)
+
+
+
+
