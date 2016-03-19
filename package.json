@@ -4,8 +4,7 @@
   "description": "Brings ROS to Docker clusters",
   "main": "master.js",
   "scripts": {
-    "run": "node master.js",
-    "test": "node test/all.js"
+    "test": "grunt test"
   },
   "repository": {
     "type": "git",
@@ -31,6 +30,8 @@
     "grunt": "^0.4.5",
     "grunt-mocha-cli": "^2.0.0",
     "grunt-mocha-test": "^0.12.7",
+    "grunt-shell": "^1.2.1",
+    "load-grunt-tasks": "^3.4.1",
     "mocha": "^2.4.5"
   }
 }

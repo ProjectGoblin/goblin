@@ -1,4 +1,9 @@
+runCoffee = (filename) ->
+  "node -r coffee-script/register #{filename}.coffee"
+
 module.exports = (grunt) ->
+  (require 'load-grunt-tasks') grunt
+
   grunt.initConfig
     pkg: grunt.file.readJSON 'package.json'
     mochacli:
@@ -7,11 +12,11 @@ module.exports = (grunt) ->
         reporter: 'nyan'
         bail: true
       all: ['test/*.coffee']
-
-  grunt.loadNpmTasks 'grunt-mocha-cli'
+    shell: run: command: runCoffee 'master'
 
   grunt.registerTask 'version', () ->
     grunt.log.writeln "goblin #{grunt.config.get 'pkg.version'}"
 
-  grunt.registerTask 'test', 'mochacli'
+  grunt.registerTask 'run',     'shell:run'
+  grunt.registerTask 'test',    'mochacli'
   grunt.registerTask 'default', 'version'
