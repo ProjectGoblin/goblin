@@ -1,4 +1,4 @@
-
+require '../master.coffee'
 (require 'chai').should()
 xmlrpc = require 'xmlrpc'
 client = xmlrpc.createClient
