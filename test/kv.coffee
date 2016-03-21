@@ -57,3 +57,17 @@ describe 'KV Helpers', () ->
             mno: 'xyz'
       (kv.parseQuery query).should.eql parsed
 
+  describe 'expandTree', () ->
+    it 'should expands a dict to a list of key-value pairs', () ->
+      tree =
+        bar: 42
+        baz: true
+        abc:
+          mno: 'xyz'
+      parsed = [
+        {Key: 'foo/bar', Value: 42}
+        {Key: 'foo/baz', Value: true}
+        {Key: 'foo/abc/mno', Value: 'xyz'}
+      ]
+      sortByKey = (xs) -> _.sortBy xs, (x) -> x.Key
+      (sortByKey kv.expandTree 'foo', tree).should.eql (sortByKey parsed)

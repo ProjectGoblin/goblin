@@ -2,6 +2,8 @@
 _ = require 'underscore'
 SEP = '/'
 
+isTree = (x) -> _.isObject x # and (not _.isArray x) and (not _.isFunction x)
+
 mergeTree = (lhs, rhs) ->
   mergeTree_ (_.extend {}, lhs), rhs
 
@@ -24,6 +26,14 @@ parseQuery = (query) ->
   trees = (kvTree node for node in query)
   _.foldl trees, mergeTree
 
+expandTree = (root, node) ->
+  if not isTree node
+    [{Key: root, Value: node}]
+  else
+    _.foldl (expandTree "#{root}/#{key}", value for key, value of node),
+            (lhs, rhs) -> lhs.concat rhs
+
 exports.parseQuery = parseQuery
 exports.mergeTree = mergeTree
 exports.kvTree = kvTree
+exports.expandTree = expandTree
