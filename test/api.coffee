@@ -88,14 +88,13 @@ describe 'ROSMasterAPI', () ->
         done()
 
   describe 'getParamNames', () ->
-    it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'getParamNames', params, (err, response) ->
+    it 'should returns all parameters\' names', (done) ->
+      client.methodCall 'getParamNames', [], (err, response) ->
         if err then throw err
         [code, desc, value] = response
         code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
+        desc.should.be.a 'string'
+        value.sort().should.eql ['foo', 'ns/bar', 'ns/baz/rgb', 'ns/foo'].sort()
         done()
 
   describe 'deleteParam', () ->

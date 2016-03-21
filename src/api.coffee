@@ -73,7 +73,11 @@ module.exports = (server) ->
   # @return: [code, statusMessage, parameterNameList]
   # @rtype: [int, str, [str]]
   server.on 'getParamNames', (err, params, callback) ->
-    callback null, [1, "success", params]
+    consul.kv.keys (err, names, res) ->
+      if err
+        callback err, res
+      else
+        callback null, [1, "Parameter names", names]
 
   # Parameter Server: delete parameter
   # @param caller_id: ROS caller id
