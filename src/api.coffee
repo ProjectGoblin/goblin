@@ -87,7 +87,12 @@ module.exports = (server) ->
   # @return: [code, msg, 0]
   # @rtype: [int, str, int]
   server.on 'deleteParam', (err, params, callback) ->
-    callback null, [1, "success", params]
+    [caller_id, key] = params
+    consul.kv.del {key: key, recurse: true}, (err, data, res) ->
+      if err
+        callback err, res
+      else
+        callback null, [1, "Parameter [#{key}] deleted", 0]
 
   # Get the PID of this server
   # @param caller_id: ROS caller id

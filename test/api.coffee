@@ -3,8 +3,7 @@ _ = require 'underscore'
 kv = require '../src/kv.coffee'
 consul = (require 'consul')()
 chai = require 'chai'
-chai.should()
-expect = chai.expect
+should = chai.should()
 xmlrpc = require 'xmlrpc'
 client = xmlrpc.createClient
   host: 'localhost'
@@ -17,14 +16,14 @@ describe 'ROSMasterAPI', () ->
       key = 'foo'
       value = 42
       client.methodCall 'setParam', [0, key, value], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, rtv] = response
         code.should.equal 1
         desc.should.equal "Parameter set: [#{key}] => [#{value}]"
         rtv.should.equal  0
         consul.kv.get {key: key, recurse: true}, (err, data) ->
-          (expect err).to.equal      null
-          data.should.have.length    1
+          should.not.exist err
+          data.should.have.length 1
           data[0].Value.should.equal JSON.stringify value
           done()
 
@@ -36,7 +35,7 @@ describe 'ROSMasterAPI', () ->
         baz:
           rgb: '#66CCFF'
       client.methodCall 'setParam', [0, key, tree], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, rtv] = response
         code.should.equal 1
         desc.should.equal "Parameter set: [#{key}] => [#{tree}]"
@@ -45,7 +44,7 @@ describe 'ROSMasterAPI', () ->
           sortByKey = (xs) -> _.sortBy xs, (x) -> x.Key
           pairs = kv.expandTree key, tree
           pairs.should.be.a('Array')
-          (expect err).to.equal   null
+          should.not.exist err
           data.should.have.length pairs.length
           for couple in _.zip (sortByKey data), (sortByKey pairs)
             couple[0].Value.should.equal couple[1].Value
@@ -55,7 +54,7 @@ describe 'ROSMasterAPI', () ->
     it 'should returns a single value when requiring a name', (done) ->
       key = 'ns/foo'
       client.methodCall 'getParam', [0, key], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "Parameter [#{key}]"
@@ -70,7 +69,7 @@ describe 'ROSMasterAPI', () ->
         baz:
           rgb: '#66CCFF'
       client.methodCall 'getParam', [0, key], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "Parameter [#{key}]"
@@ -80,7 +79,7 @@ describe 'ROSMasterAPI', () ->
     it 'should raise an error when requiring a not-existing name', (done) ->
       key = 'not-exists'
       client.methodCall 'getParam', [0, key], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal -1
         desc.should.equal "Parameter [#{key}] not exists"
@@ -90,7 +89,7 @@ describe 'ROSMasterAPI', () ->
   describe 'getParamNames', () ->
     it 'should returns all parameters\' names', (done) ->
       client.methodCall 'getParamNames', [], (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.be.a 'string'
@@ -98,21 +97,24 @@ describe 'ROSMasterAPI', () ->
         done()
 
   describe 'deleteParam', () ->
-    it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'deleteParam', params, (err, response) ->
-        if err then throw err
+    testUnit = (key, detector) -> (done) ->
+      client.methodCall 'deleteParam', [0, key], (err, response) ->
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
-        done()
+        desc.should.be.a 'string'
+        client.methodCall 'getParamNames', null, (err, res) ->
+          should.not.exist err
+          should.not.exist (res[2].find detector)
+          done()
+    it 'should delete parameter correctly', (testUnit 'ns/bar', (x) -> x == 'ns/bar')
+    it 'should delete parameter recursively', (testUnit 'ns', (x) -> x.startsWith 'ns')
 
   describe 'getPid', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'getPid', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -124,7 +126,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'getPublishedTopics', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -136,7 +138,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'getSystemState', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -148,7 +150,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'getTopicTypes', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -160,7 +162,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'getUri', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -172,7 +174,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'hasParam', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -184,7 +186,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'lookupNode', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -196,7 +198,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'lookupService', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -208,7 +210,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'param_update_task', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -220,7 +222,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'registerPublisher', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -232,7 +234,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'registerService', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -244,7 +246,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'registerSubscriber', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -256,7 +258,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'searchParam', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -268,7 +270,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'shutdown', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -280,7 +282,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'subscribeParam', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -292,7 +294,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'unregisterPublisher', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -304,7 +306,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'unregisterService', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -316,7 +318,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'unregisterSubscriber', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
@@ -328,7 +330,7 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'unsubscribeParam', params, (err, response) ->
-        if err then throw err
+        should.not.exist err
         [code, desc, value] = response
         code.should.equal 1
         desc.should.equal "success"
