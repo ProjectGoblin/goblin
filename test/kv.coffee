@@ -45,9 +45,9 @@ describe 'KV Helpers', () ->
   describe 'parseQuery', () ->
     it 'should build a tree whose root namespace is exactly the key used in getParam', () ->
       query = [
-        {Key: 'foo/bar', Value: 42}
-        {Key: 'foo/baz', Value: true}
-        {Key: 'foo/abc/mno', Value: 'xyz'}
+        {Key: 'foo/bar', Value: JSON.stringify 42}
+        {Key: 'foo/baz', Value: JSON.stringify true}
+        {Key: 'foo/abc/mno', Value: JSON.stringify 'xyz'}
       ]
       parsed =
         foo:
@@ -65,9 +65,9 @@ describe 'KV Helpers', () ->
         abc:
           mno: 'xyz'
       parsed = [
-        {Key: 'foo/bar', Value: 42}
-        {Key: 'foo/baz', Value: true}
-        {Key: 'foo/abc/mno', Value: 'xyz'}
+        {Key: 'foo/bar', Value: JSON.stringify 42}
+        {Key: 'foo/baz', Value: JSON.stringify true}
+        {Key: 'foo/abc/mno', Value: JSON.stringify 'xyz'}
       ]
       sortByKey = (xs) -> _.sortBy xs, (x) -> x.Key
       (sortByKey kv.expandTree 'foo', tree).should.eql (sortByKey parsed)

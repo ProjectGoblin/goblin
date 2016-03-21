@@ -17,7 +17,7 @@ mergeTree_ = (lhs, rhs) ->
 
 kvTree = (result) ->
   xs = result.Key.split SEP
-  tree = "#{xs.pop()}": result.Value
+  tree = "#{xs.pop()}": JSON.parse result.Value
   for ns in xs.reverse()
     tree = "#{ns}": tree
   return tree
@@ -28,7 +28,7 @@ parseQuery = (query) ->
 
 expandTree = (root, node) ->
   if not isTree node
-    [{Key: root, Value: node}]
+    [{Key: root, Value: JSON.stringify node}]
   else
     _.foldl (expandTree "#{root}/#{key}", value for key, value of node),
             (lhs, rhs) -> lhs.concat rhs
