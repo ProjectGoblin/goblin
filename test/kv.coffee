@@ -27,6 +27,8 @@ describe 'KV Helpers', () ->
       rhs_.should.eql rhs
     it "should works on 'empty objects' ({})", () ->
       (kv.mergeTree {}, {}).should.eql {}
+    it "should satisfy: mergeTree({}, tree) === tree", () ->
+      (kv.mergeTree {}, lhs).should.eql lhs
 
   describe 'kvTree', () ->
     it 'should build trees correctly', () ->
