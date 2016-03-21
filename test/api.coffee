@@ -52,15 +52,40 @@ describe 'ROSMasterAPI', () ->
           done()
 
   describe 'getParam', () ->
-    it 'should works like echo', (done) ->
-#      params = ['param']
-#      client.methodCall 'getParam', params, (err, response) ->
-#        if err then throw err
-#        [code, desc, value] = response
-#        code.should.equal 1
-#        desc.should.equal "Parameter [#{key}]"
-#        value.should.eql  params
-      done()
+    it 'should returns a single value when requiring a name', (done) ->
+      key = 'ns/foo'
+      client.methodCall 'getParam', [0, key], (err, response) ->
+        if err then throw err
+        [code, desc, value] = response
+        code.should.equal 1
+        desc.should.equal "Parameter [#{key}]"
+        value.should.equal 42
+        done()
+
+    it 'should returns a parameter tree when requiring a namespace', (done) ->
+      key = 'ns'
+      tree =
+        foo: 42
+        bar: false
+        baz:
+          rgb: '#66CCFF'
+      client.methodCall 'getParam', [0, key], (err, response) ->
+        if err then throw err
+        [code, desc, value] = response
+        code.should.equal 1
+        desc.should.equal "Parameter [#{key}]"
+        value.should.eql tree
+        done()
+
+    it 'should raise an error when requiring a not-existing name', (done) ->
+      key = 'not-exists'
+      client.methodCall 'getParam', [0, key], (err, response) ->
+        if err then throw err
+        [code, desc, value] = response
+        code.should.equal -1
+        desc.should.equal "Parameter [#{key}] not exists"
+        value.should.equal 0
+        done()
 
   describe 'getParamNames', () ->
     it 'should works like echo', (done) ->
@@ -226,7 +251,7 @@ describe 'ROSMasterAPI', () ->
         desc.should.equal "success"
         value.should.eql  params
         done()
-        
+
 
   describe 'searchParam', () ->
     it 'should works like echo', (done) ->
@@ -238,7 +263,7 @@ describe 'ROSMasterAPI', () ->
         desc.should.equal "success"
         value.should.eql  params
         done()
-        
+
 
   describe 'shutdown', () ->
     it 'should works like echo', (done) ->

@@ -54,12 +54,13 @@ module.exports = (server) ->
   # parameter in that namespace. Sub-namespaces are also
   # represented as dictionaries.
   # @rtype: [int, str, XMLRPCLegalValue]
-  server.on 'getParam', (err, key, callback) ->
+  server.on 'getParam', (err, params, callback) ->
+    [caller_id, key] = params
     consul.kv.get {key: key, recurse: true}, (err, data, res) ->
-      if err isnt undefined
+      if err
         callback err, res
-      if value is undefined
-        callback null, [-1, "Parameter [#{key}] is not set", 0]
+      if data is undefined
+        callback null, [-1, "Parameter [#{key}] not exists", 0]
       else
         value = kv.parseQuery data
         callback null, [1, "Parameter [#{key}]", value[key]]

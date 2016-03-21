@@ -23,8 +23,11 @@ kvTree = (result) ->
   return tree
 
 parseQuery = (query) ->
-  trees = (kvTree node for node in query)
-  _.foldl trees, mergeTree
+  if query.length == 1
+    "#{query[0].Key}": JSON.parse query[0].Value
+  else
+    trees = (kvTree node for node in query)
+    _.foldl trees, mergeTree
 
 expandTree = (root, node) ->
   if not isTree node
