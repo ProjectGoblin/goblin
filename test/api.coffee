@@ -1,36 +1,66 @@
 require '../master.coffee'
-(require 'chai').should()
+_ = require 'underscore'
+kv = require '../src/kv.coffee'
+consul = (require 'consul')()
+chai = require 'chai'
+chai.should()
+expect = chai.expect
 xmlrpc = require 'xmlrpc'
 client = xmlrpc.createClient
   host: 'localhost'
   port: 11311
   path: '/'
 describe 'ROSMasterAPI', () ->
-           
-
-  describe 'deleteParam', () ->
-    it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'deleteParam', params, (err, response) ->
+  # Parameter Server
+  describe 'setParam', () ->
+    it 'should set singe value correctly', (done) ->
+      key = 'foo'
+      value = 42
+      client.methodCall 'setParam', [0, key, value], (err, response) ->
         if err then throw err
-        [code, desc, value] = response
+        [code, desc, rtv] = response
         code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
-        done()
-        
+        desc.should.equal "Parameter set: [#{key}] => [#{value}]"
+        rtv.should.equal  0
+        consul.kv.get {key: key, recurse: true}, (err, data) ->
+          (expect err).to.equal      null
+          data.should.have.length    1
+          data[0].Value.should.equal JSON.stringify value
+          done()
+
+    it 'should set parameter tree correctly', (done) ->
+      key = 'ns'
+      tree =
+        foo: 42
+        bar: false
+        baz:
+          rgb: '#66CCFF'
+      client.methodCall 'setParam', [0, key, tree], (err, response) ->
+        if err then throw err
+        [code, desc, rtv] = response
+        code.should.equal 1
+        desc.should.equal "Parameter set: [#{key}] => [#{tree}]"
+        rtv.should.equal  0
+        consul.kv.get {key: key, recurse: true}, (err, data) ->
+          sortByKey = (xs) -> _.sortBy xs, (x) -> x.Key
+          pairs = kv.expandTree key, tree
+          pairs.should.be.a('Array')
+          (expect err).to.equal   null
+          data.should.have.length pairs.length
+          for couple in _.zip (sortByKey data), (sortByKey pairs)
+            couple[0].Value.should.equal couple[1].Value
+          done()
 
   describe 'getParam', () ->
     it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'getParam', params, (err, response) ->
-        if err then throw err
-        [code, desc, value] = response
-        code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
-        done()
-        
+#      params = ['param']
+#      client.methodCall 'getParam', params, (err, response) ->
+#        if err then throw err
+#        [code, desc, value] = response
+#        code.should.equal 1
+#        desc.should.equal "Parameter [#{key}]"
+#        value.should.eql  params
+      done()
 
   describe 'getParamNames', () ->
     it 'should works like echo', (done) ->
@@ -42,7 +72,17 @@ describe 'ROSMasterAPI', () ->
         desc.should.equal "success"
         value.should.eql  params
         done()
-        
+
+  describe 'deleteParam', () ->
+    it 'should works like echo', (done) ->
+      params = ['param']
+      client.methodCall 'deleteParam', params, (err, response) ->
+        if err then throw err
+        [code, desc, value] = response
+        code.should.equal 1
+        desc.should.equal "success"
+        value.should.eql  params
+        done()
 
   describe 'getPid', () ->
     it 'should works like echo', (done) ->
@@ -192,18 +232,6 @@ describe 'ROSMasterAPI', () ->
     it 'should works like echo', (done) ->
       params = ['param']
       client.methodCall 'searchParam', params, (err, response) ->
-        if err then throw err
-        [code, desc, value] = response
-        code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
-        done()
-        
-
-  describe 'setParam', () ->
-    it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'setParam', params, (err, response) ->
         if err then throw err
         [code, desc, value] = response
         code.should.equal 1

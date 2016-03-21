@@ -1,14 +1,44 @@
+_ = require 'underscore'
+kv = require './kv.coffee'
+async = require 'async'
+consul = (require 'consul')()
 
 module.exports = (server) ->
-  # Parameter Server: delete parameter
+
+  # Parameter Server
+
+  # Parameter Server: set parameter.  NOTE: if value is a
+  # dictionary it will be treated as a parameter tree, where key
+  # is the parameter namespace. For example:::
+  # {'x':1,'y':2,'sub':{'z':3}}
+  #
+  # will set key/x=1, key/y=2, and key/sub/z=3. Furthermore, it
+  # will replace all existing parameters in the key parameter
+  # namespace with the parameters in value. You must set
+  # parameters individually if you wish to perform a union update.
+  #
   # @param caller_id: ROS caller id
   # @type  caller_id: str
   # @param key: parameter name
   # @type  key: str
+  # @param value: parameter value.
+  # @type  value: XMLRPCLegalValue
   # @return: [code, msg, 0]
   # @rtype: [int, str, int]
-  server.on 'deleteParam', (err, params, callback) ->
-    callback null, [1, "success", params]
+  server.on 'setParam', (err, params, callback) ->
+    [caller_id, key, value] = params
+    pairs = kv.expandTree key, value
+    async.map pairs, ((p, cb) -> consul.kv.set p, cb), (err, results) ->
+      if err
+        msg = "Failed setting parameter [#{key}] => [#{value}]: #{err}"
+        callback null, [-1, msg , 0]
+      status = _.filter results, (x) -> x isnt true
+      if status.length != 0
+        msg = "Failed setting parameter [#{key}] => [#{value}]: #{status}"
+        callback null, [-1, msg, 0]
+      else
+        msg = "Parameter set: [#{key}] => [#{value}]"
+        callback null, [1, msg, 0]
 
   # Retrieve parameter value from server.
   # @param caller_id: ROS caller id
@@ -24,8 +54,15 @@ module.exports = (server) ->
   # parameter in that namespace. Sub-namespaces are also
   # represented as dictionaries.
   # @rtype: [int, str, XMLRPCLegalValue]
-  server.on 'getParam', (err, params, callback) ->
-    callback null, [1, "success", params]
+  server.on 'getParam', (err, key, callback) ->
+    consul.kv.get {key: key, recurse: true}, (err, data, res) ->
+      if err isnt undefined
+        callback err, res
+      if value is undefined
+        callback null, [-1, "Parameter [#{key}] is not set", 0]
+      else
+        value = kv.parseQuery data
+        callback null, [1, "Parameter [#{key}]", value[key]]
 
   # Get list of all parameter names stored on this server.
   # This does not adjust parameter names for caller's scope.
@@ -35,6 +72,16 @@ module.exports = (server) ->
   # @return: [code, statusMessage, parameterNameList]
   # @rtype: [int, str, [str]]
   server.on 'getParamNames', (err, params, callback) ->
+    callback null, [1, "success", params]
+
+  # Parameter Server: delete parameter
+  # @param caller_id: ROS caller id
+  # @type  caller_id: str
+  # @param key: parameter name
+  # @type  key: str
+  # @return: [code, msg, 0]
+  # @rtype: [int, str, int]
+  server.on 'deleteParam', (err, params, callback) ->
     callback null, [1, "success", params]
 
   # Get the PID of this server
@@ -201,27 +248,6 @@ module.exports = (server) ->
   # ignored.
   # @rtype: [int, str, str]
   server.on 'searchParam', (err, params, callback) ->
-    callback null, [1, "success", params]
-
-  # Parameter Server: set parameter.  NOTE: if value is a
-  # dictionary it will be treated as a parameter tree, where key
-  # is the parameter namespace. For example:::
-  # {'x':1,'y':2,'sub':{'z':3}}
-  # 
-  # will set key/x=1, key/y=2, and key/sub/z=3. Furthermore, it
-  # will replace all existing parameters in the key parameter
-  # namespace with the parameters in value. You must set
-  # parameters individually if you wish to perform a union update.
-  # 
-  # @param caller_id: ROS caller id
-  # @type  caller_id: str
-  # @param key: parameter name
-  # @type  key: str
-  # @param value: parameter value.
-  # @type  value: XMLRPCLegalValue
-  # @return: [code, msg, 0]
-  # @rtype: [int, str, int]
-  server.on 'setParam', (err, params, callback) ->
     callback null, [1, "success", params]
 
   # Stop this server
