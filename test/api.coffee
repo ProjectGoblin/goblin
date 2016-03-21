@@ -1,6 +1,7 @@
 require '../master.coffee'
 _ = require 'underscore'
 kv = require '../src/kv.coffee'
+async = require 'async'
 consul = (require 'consul')()
 chai = require 'chai'
 should = chai.should()
@@ -10,6 +11,11 @@ client = xmlrpc.createClient
   port: 11311
   path: '/'
 describe 'ROSMasterAPI', () ->
+  # Set up & clean up
+  kvClear = (done) -> consul.kv.del {key: '', recurse: true}, done
+  before kvClear
+  after kvClear
+
   # Parameter Server
   describe 'setParam', () ->
     it 'should set singe value correctly', (done) ->
@@ -110,6 +116,30 @@ describe 'ROSMasterAPI', () ->
     it 'should delete parameter correctly', (testUnit 'ns/bar', (x) -> x == 'ns/bar')
     it 'should delete parameter recursively', (testUnit 'ns', (x) -> x.startsWith 'ns')
 
+  describe 'hasParam', () ->
+    withKeySet = (key, value, testcase) -> (done) ->
+      client.methodCall 'setParam', [0, key, value], (err, response) ->
+        should.not.exist err
+        should.exist response
+        testcase done
+
+    testUnit = (key, exist) -> (done) ->
+      client.methodCall 'hasParam', [0, key], (err, response) ->
+        should.not.exist err
+        [code, desc, value] = response
+        code.should.equal 1
+        desc.should.equal key
+        value.should.equal exist
+        done()
+
+    it 'should returns true on an existing name',
+      withKeySet 'name/a', 42, testUnit 'name/a', true
+    it 'should returns false on a not-existing name',
+      testUnit 'name/b', false
+    it 'should returns true on an existing namespace',
+      withKeySet 'nsx',{y:25, z: 26} , testUnit 'nsx', true
+    it 'should returns false on a not-existing namespace', testUnit 'nsy', false
+
   describe 'getPid', () ->
     it 'should works like echo', (done) ->
       params = ['param']
@@ -170,17 +200,6 @@ describe 'ROSMasterAPI', () ->
         done()
         
 
-  describe 'hasParam', () ->
-    it 'should works like echo', (done) ->
-      params = ['param']
-      client.methodCall 'hasParam', params, (err, response) ->
-        should.not.exist err
-        [code, desc, value] = response
-        code.should.equal 1
-        desc.should.equal "success"
-        value.should.eql  params
-        done()
-        
 
   describe 'lookupNode', () ->
     it 'should works like echo', (done) ->

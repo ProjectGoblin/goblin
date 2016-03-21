@@ -94,6 +94,26 @@ module.exports = (server) ->
       else
         callback null, [1, "Parameter [#{key}] deleted", 0]
 
+  # Check if parameter is stored on server.
+  # @param caller_id str: ROS caller id
+  # @type  caller_id: str
+  # @param key: parameter to check
+  # @type  key: str
+  # @return: [code, statusMessage, hasParam]
+  # @rtype: [int, str, bool]
+  server.on 'hasParam', (err, params, callback) ->
+    detecor = (key) -> (name) ->
+      name == key or name.startsWith "#{key}/"
+
+    [caller_id, key] = params
+    consul.kv.keys (err, names, res) ->
+      if err
+        callback err, res
+      else
+        callback null, [1, key, (names.find detecor key) isnt undefined]
+
+  # Master
+
   # Get the PID of this server
   # @param caller_id: ROS caller id
   # @type  caller_id: str
@@ -146,16 +166,6 @@ module.exports = (server) ->
   # @param caller_id str: ROS caller id
   # @return [int, str, str]: [1, "", xmlRpcUri]
   server.on 'getUri', (err, params, callback) ->
-    callback null, [1, "success", params]
-
-  # Check if parameter is stored on server.
-  # @param caller_id str: ROS caller id
-  # @type  caller_id: str
-  # @param key: parameter to check
-  # @type  key: str
-  # @return: [code, statusMessage, hasParam]
-  # @rtype: [int, str, bool]
-  server.on 'hasParam', (err, params, callback) ->
     callback null, [1, "success", params]
 
   # Get the XML-RPC URI of the node with the associated
