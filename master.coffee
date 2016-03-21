@@ -1,6 +1,6 @@
 xmlrpc = require 'xmlrpc'
 
-attach_api = require './src/api.coffee'
+injectAPI = (require './src/api.coffee').injectAPI
 
 server = xmlrpc.createServer
   host: 'localhost'
@@ -9,4 +9,4 @@ server = xmlrpc.createServer
 server.on 'NotFound', (method, params) ->
   console.log "Method #{method}(#{params}) not found"
 
-attach_api server
+injectAPI server
